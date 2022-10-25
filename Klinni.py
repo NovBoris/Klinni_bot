@@ -481,7 +481,7 @@ def callback_handler(call):
                             elif i > 28:
                                 buttons[4].append(InlineKeyboardButton(i, callback_data='6' + str(i) + ' :Время'))
                         keyboard.row(*buttons[0]).row(*buttons[1]).row(*buttons[2]).row(*buttons[3]).row(*buttons[4])
-                        keyboard.add(InlineKeyboardButton('Назад', callback_data='6' + 'Рассчитать уборку'))
+                        keyboard.add(InlineKeyboardButton('Назад', callback_data='6' + 'Рассчитать уборку :' + '0 :Месяц'))
                         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                               text='Выберете день', reply_markup=keyboard)
                         user_id[call.message.chat.id].year = year
