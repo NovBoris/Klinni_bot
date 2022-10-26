@@ -18,6 +18,7 @@ class OrderClass:
         self.cleaning_time = 0
         self.price = 0
         self.username = ''
+        self.chat_id = ''
 
 
 class UserRequest:
@@ -26,3 +27,10 @@ class UserRequest:
         self.furniture = 'Нет'
         self.telephone = ''
         self.username = ''
+
+
+class Admin:
+    def __init__(self):
+        self.name = ''
+        self.id = 0
+

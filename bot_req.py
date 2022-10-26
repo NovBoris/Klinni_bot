@@ -13,7 +13,7 @@ def check_list():
     return res
 
 
-def cleaners(flag=False):
+def cleaners():
     url = 'https://cleanny.by/'
     headers = {'user-agent': 'Chrome/89.0.4389.90'}
     r = get(url, headers=headers)
@@ -63,3 +63,16 @@ def general_information():
         .replace('\r', '').split('\n')
     res = list(filter(lambda x: len(x) > 0, res))
     return [photo, res]
+
+
+def additional_services():
+    url = 'http://cleanny.by/calculator?rooms=1&sans=1'
+    headers = {'user-agent': 'Chrome/89.0.4389.90'}
+    r = get(url, headers=headers)
+    soup = BeautifulSoup(r.content, 'html.parser')
+
+    teme = soup.find_all('div', class_='col-md-3 col-sm-3 col-xs-6 order_additional')
+    res = []
+    for i in teme:
+        res.append(i.get_text(strip=True).replace('–', ''))
+    return res
