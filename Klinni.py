@@ -1,6 +1,5 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-import bot_req
 from add_class import OrderClass, UserRequest, Admin
 import time
 import calendar
@@ -12,6 +11,7 @@ import sqlite3
 bot = telebot.TeleBot('5502235861:AAHzqGs8cakisXDVOA4TnC87yIIh7xfPiIo')
 admin_group_id = -884604288
 reviews_group_id = -850436301
+order_group = -852975849
 user_id = {}
 with sqlite3.connect('klinni_base.db') as con:
     cur = con.cursor()
@@ -22,8 +22,9 @@ with sqlite3.connect('klinni_base.db') as con:
     cur.execute("SELECT * FROM klinni_inf")
     klinni_inf = list(cur.fetchall()[0])
 promo_code = {'123': 15, '1234': 20}
-order = 1
 order_req = 1
+months = ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+
 
 
 def fs(st):
@@ -35,8 +36,9 @@ def dt(s):
     return s
 
 
-def text_res(call, user_id, promo=None):
-    if promo is None:
+def text_res(call, additional_services=None, promo=None):
+    additional_services = "\n".join([" ".join([str(g) for g in i]) for i in user_id[call.message.chat.id].additional_services])
+    if promo is None and additional_services is None:
         text = f'Ваш заказ:\nКоличество комнат: {user_id[call.message.chat.id].number_of_rooms}шт\n' \
                f'Количество санузлов: {user_id[call.message.chat.id].number_of_bathrooms}шт\n'\
                f'Время уборки: {user_id[call.message.chat.id].cleaning_time}ч\n'\
@@ -45,9 +47,42 @@ def text_res(call, user_id, promo=None):
                f'Время: {user_id[call.message.chat.id].time}\n'\
                f'ФИО: {user_id[call.message.chat.id].full_name}\n'\
                f'Адрес: {user_id[call.message.chat.id].address}\n'\
-               f'Телефон: {user_id[call.message.chat.id].telephone}\n'\
+               f'Телефон: {user_id[call.message.chat.id].telephone}\n' \
+               f'Почта : {user_id[call.message.chat.id].email}\n' \
+               f'Количество работников: {user_id[call.message.chat.id].number_of_performers}\n'\
                f'Сумма скидки за регулярность: {floor((float(user_id[call.message.chat.id].price) / 100) * user_id[call.message.chat.id].regularity_of_cleaning[1])}р\n'\
                f'К оплате: {ceil(user_id[call.message.chat.id].total)}'
+    elif promo is None and additional_services is not None:
+        text = f'Ваш заказ:\nКоличество комнат: {user_id[call.message.chat.id].number_of_rooms}шт\n' \
+               f'Количество санузлов: {user_id[call.message.chat.id].number_of_bathrooms}шт\n' \
+               f'Допы: {additional_services}\n'\
+               f'Время уборки: {user_id[call.message.chat.id].cleaning_time}ч\n'\
+               f'Цена: {user_id[call.message.chat.id].price}р\n'\
+               f'Дата: {user_id[call.message.chat.id].the_date}\n'\
+               f'Время: {user_id[call.message.chat.id].time}\n'\
+               f'ФИО: {user_id[call.message.chat.id].full_name}\n'\
+               f'Адрес: {user_id[call.message.chat.id].address}\n'\
+               f'Телефон: {user_id[call.message.chat.id].telephone}\n' \
+               f'Почта : {user_id[call.message.chat.id].email}\n' \
+               f'Количество работников: {user_id[call.message.chat.id].number_of_performers}\n'\
+               f'Сумма скидки за регулярность: {floor((float(user_id[call.message.chat.id].price) / 100) * user_id[call.message.chat.id].regularity_of_cleaning[1])}р\n'\
+               f'К оплате: {ceil(user_id[call.message.chat.id].total)}'
+    elif promo is not None and additional_services is not None:
+        text = f'Ваш заказ:\nКоличество комнат: {user_id[call.message.chat.id].number_of_rooms}шт\n' \
+               f'Количество санузлов: {user_id[call.message.chat.id].number_of_bathrooms}шт\n' \
+               f'Допы: {additional_services}\n' \
+               f'Время уборки: {user_id[call.message.chat.id].cleaning_time}ч\n' \
+               f'Цена: {user_id[call.message.chat.id].price}р\n' \
+               f'Дата: {user_id[call.message.chat.id].the_date}\n' \
+               f'Время: {user_id[call.message.chat.id].time}\n' \
+               f'ФИО: {user_id[call.message.chat.id].full_name}\n' \
+               f'Адрес: {user_id[call.message.chat.id].address}\n' \
+               f'Телефон: {user_id[call.message.chat.id].telephone}\n' \
+               f'Почта : {user_id[call.message.chat.id].email}\n' \
+               f'Количество работников: {user_id[call.message.chat.id].number_of_performers}\n'\
+               f'Сумма скидки за регулярность: {floor((float(user_id[call.message.chat.id].price) / 100) * user_id[call.message.chat.id].regularity_of_cleaning[1])}р\n' \
+               f'Сумма скидки за промокод: {floor((float(user_id[call.message.chat.id].total) / 100) * user_id[call.message.chat.id].promo_code[1])}р\n' \
+               f'К оплате: {ceil(user_id[call.message.chat.id].total)}р'
     else:
         text = f'Ваш заказ:\nКоличество комнат: {user_id[call.message.chat.id].number_of_rooms}шт\n'\
                f'Количество санузлов: {user_id[call.message.chat.id].number_of_bathrooms}шт\n'\
@@ -58,7 +93,8 @@ def text_res(call, user_id, promo=None):
                f'ФИО: {user_id[call.message.chat.id].full_name}\n'\
                f'Адрес: {user_id[call.message.chat.id].address}\n'\
                f'Телефон: {user_id[call.message.chat.id].telephone}\n'\
-               f'Почта : {user_id[call.message.chat.id].email}'\
+               f'Почта : {user_id[call.message.chat.id].email}\n' \
+               f'Количество работников: {user_id[call.message.chat.id].number_of_performers}\n'\
                f'Сумма скидки за регулярность: {floor((float(user_id[call.message.chat.id].price) / 100) * user_id[call.message.chat.id].regularity_of_cleaning[1])}р\n'\
                f'Сумма скидки за промокод: {floor((float(user_id[call.message.chat.id].total) / 100) * user_id[call.message.chat.id].promo_code[1])}р\n'\
                f'К оплате: {ceil(user_id[call.message.chat.id].total)}р'
@@ -67,7 +103,7 @@ def text_res(call, user_id, promo=None):
 
 def menu(call, user_id):
     keyboard = InlineKeyboardMarkup()
-    keyboard.row(InlineKeyboardButton('Калькулятор', callback_data='0' + 'Калькулятор'),
+    keyboard.row(InlineKeyboardButton('Подобрать уборку', callback_data='0' + 'Калькулятор'),
                  InlineKeyboardButton('Описание услуг', callback_data='1' + 'Описание услуг'),
                  InlineKeyboardButton('Отзывы', callback_data='0' + 'Отзывы'))
     if user_id in admin_id:
@@ -96,7 +132,6 @@ def message_handler(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     bot.answer_callback_query(callback_query_id=call.id, )
-    global order
     global order_req
     global additional
     global admin_id
@@ -607,13 +642,18 @@ def callback_handler(call):
                                           , reply_markup=keyboard)
                 elif flag == '6':
                     if data.split(' :')[2] == 'Месяц':
+                        global months
+                        month_now = time.strptime(time.ctime(time.time())).tm_mon
+                        month1 = month_now + 1
+                        month2 = month_now + 2
+                        if month_now + 1 == 13:
+                            month1 = month_now + 1 - 12
+                        if month_now + 2 == 14:
+                            month2 = month_now + 2 - 12
                         keyboard = InlineKeyboardMarkup()
-                        keyboard.row(InlineKeyboardButton('Октябрь', callback_data='6' + 'Рассчитать уборку :' + str(
-                            time.strptime(time.ctime(time.time())).tm_mon) + ' :День'),
-                                     InlineKeyboardButton('Ноябрь', callback_data='6' + 'Рассчитать уборку :' + str(
-                                         time.strptime(time.ctime(time.time())).tm_mon + 1) + ' :День'),
-                                     InlineKeyboardButton('Декабрь', callback_data='6' + 'Рассчитать уборку :' + str(
-                                         time.strptime(time.ctime(time.time())).tm_mon + 2) + ' :День'))
+                        keyboard.row(InlineKeyboardButton(months[month_now], callback_data='6' + 'Рассчитать уборку :' + str(month_now) + ' :День'),
+                                     InlineKeyboardButton(months[month1], callback_data='6' + 'Рассчитать уборку :' + str(month1) + ' :День'),
+                                     InlineKeyboardButton(months[month2], callback_data='6' + 'Рассчитать уборку :' + str(month2) + ' :День'))
                         keyboard.add(InlineKeyboardButton('Назад', callback_data='2' + 'Рассчитать уборку'))
                         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                               text='Выберете месяц', reply_markup=keyboard)
@@ -627,40 +667,182 @@ def callback_handler(call):
                         if month == 13 or month == 14:
                             month = month - 12
                             year += 1
+                        if user_id[call.message.chat.id].cleaning_time > 8:
+                            user_id[call.message.chat.id].number_of_performers = ceil(
+                                user_id[call.message.chat.id].cleaning_time / 8)
+                            user_id[call.message.chat.id].cleaning_time_min = ceil(
+                                (user_id[call.message.chat.id].cleaning_time * 60) / user_id[
+                                    call.message.chat.id].number_of_performers)
+                        else:
+                            user_id[call.message.chat.id].number_of_performers = 1
+                            user_id[call.message.chat.id].cleaning_time_min = ceil(
+                                user_id[call.message.chat.id].cleaning_time * 60)
+
+                        month_now = time.strptime(time.ctime(time.time())).tm_mon
                         days = calen.formatmonth(year, month)[40:].strip().replace('\n', ' ').replace('  ', ' ').split(' ')
+                        day_now = time.strptime(time.ctime(time.time())).tm_mday
+                        if month == month_now:
+                            days = list(filter(lambda x: int(x) > day_now, days))
                         keyboard = InlineKeyboardMarkup()
+                        res = []
+                        count = 9
+                        for i in range(3):
+                            for g in range(7):
+                                time_float = str(float(count))
+                                if time_float.split('.')[1] == '3':
+                                    time_float = float(
+                                        time_float.split('.')[0] + time_float.split('.')[1].replace('3', '.5'))
+                                else:
+                                    time_float = float(time_float)
+                                date_time = floor(time_float * 60 + user_id[call.message.chat.id].cleaning_time_min)
+                                if date_time % 60 == 0 or (date_time % 60) / 60 == 0.5:
+                                    date_time = float(date_time) / 60
+                                else:
+                                    while date_time % 60 != 0 and (date_time % 60) / 60 != 0.5:
+                                        date_time += 1
+                                    else:
+                                        date_time = float(date_time) / 60
+                                date_time = '%.2f' % float(date_time)
+                                if float(date_time) > 21:
+                                    break
+                                res.append([str('%.2f' % count).replace('.', ':'), '-', date_time.split('.')[0] + ':' + date_time.split('.')[1].replace('5', '3')])
+                                if isinstance(count, int):
+                                    count += 0.30
+                                else:
+                                    count = int(count + 0.70)
+                                if str('%.2f' % count).replace('.', ':') == '18:30':
+                                    break
                         buttons = [[], [], [], [], []]
                         for i in days:
-                            i = int(i)
-                            if i <= 7:
-                                buttons[0].append(
-                                    InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(i) + ' :Время'))
-                            elif 7 < i < 15:
-                                buttons[1].append(
-                                    InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(i) + ' :Время'))
-                            elif 15 <= i < 22:
-                                buttons[2].append(
-                                    InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(i) + ' :Время'))
-                            elif 22 <= i < 29:
-                                buttons[3].append(
-                                    InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(i) + ' :Время'))
-                            elif i > 28:
-                                buttons[4].append(InlineKeyboardButton(i, callback_data='6' 'Рассчитать уборку :' + str(i) + ' :Время'))
+                            flag_day = True
+                            with sqlite3.connect('klinni_base.db') as con:
+                                cur = con.cursor()
+                                cur.execute("SELECT * FROM orders WHERE data=?", (i + '/' + str(month) + '/' + str(year), ))
+                                db_res = cur.fetchall()
+                                performers_count = 0
+                                for g in db_res:
+                                    performers_count += int(g[3])
+                                    flag_day = False
+                                    if g[0] != i + '/' + str(month) + '/' + str(year):
+                                        break
+                                    if g[1].split('-')[0].split(':')[1][0] == '3':
+                                        if int(g[1].split('-')[0].split(':')[0]) == 9:
+                                            time_1 = int(g[1].split('-')[0].split(':')[0])
+                                        else:
+                                            time_1 = int(g[1].split('-')[0].split(':')[0]) + 1
+                                    else:
+                                        time_1 = int(g[1].split('-')[0].split(':')[0])
+                                    if g[1].split('-')[1].split(':')[1][0] == '3':
+                                        time_2 = int(g[1].split('-')[1].split(':')[0]) + 1
+                                    else:
+                                        time_2 = int(g[1].split('-')[1].split(':')[0])
+                                    for k in res:
+                                        if k[2].split(':')[1][0] == '3':
+                                            time_4 = int(k[2].split(':')[0]) + 1
+                                        else:
+                                            time_4 = int(k[2].split(':')[0])
+                                        time_3 = int(k[0].split(':')[0])
+                                        if time_4 <= time_1 or time_3 >= time_2:
+                                            flag_day = True
+                                            break
+                                        else:
+                                            flag_day = True
+                                            if performers_count >= 4 or 4 - performers_count - int(user_id[call.message.chat.id].number_of_performers) < 0:
+                                                flag_day = False
+                                                break
+                            if flag_day:
+                                i = int(i)
+                                if i <= 7:
+                                    buttons[0].append(
+                                        InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(
+                                            i) + ' :Время'))
+                                elif 7 < i < 15:
+                                    buttons[1].append(
+                                        InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(
+                                            i) + ' :Время'))
+                                elif 15 <= i < 22:
+                                    buttons[2].append(
+                                        InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(
+                                            i) + ' :Время'))
+                                elif 22 <= i < 29:
+                                    buttons[3].append(
+                                        InlineKeyboardButton(i, callback_data='6' + 'Рассчитать уборку :' + str(
+                                            i) + ' :Время'))
+                                elif i > 28:
+                                    buttons[4].append(InlineKeyboardButton(i, callback_data='6' 'Рассчитать уборку :' + str(
+                                        i) + ' :Время'))
                         keyboard.row(*buttons[0]).row(*buttons[1]).row(*buttons[2]).row(*buttons[3]).row(*buttons[4])
                         keyboard.add(InlineKeyboardButton('Назад', callback_data='6' + 'Рассчитать уборку :' + '0 :Месяц'))
-                        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                              text='Выберете день', reply_markup=keyboard)
+                        for i in buttons:
+                            if len(i) != 0:
+                                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                                      text='Выберете день', reply_markup=keyboard)
+                                break
+                        else:
+                            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                                  text='К сожалению на этот месяц свободных мест не осталось', reply_markup=keyboard)
                         user_id[call.message.chat.id].year = year
                         user_id[call.message.chat.id].month = month
                     if data.split(' :')[2] == 'Время':
+                        user_id[call.message.chat.id].day = data.split(' :')[1]
                         keyboard = InlineKeyboardMarkup()
                         buttons = [[], [], [], []]
                         count = 9
                         for i in range(3):
                             for g in range(7):
-                                buttons[i].append(InlineKeyboardButton(str('%.2f' % count).replace('.', ':'),
-                                                                       callback_data='6' 'Рассчитать уборку :' + str(
-                                                                           '%.2f' % count).replace('.', ':') + ' :Регу'))
+                                time_float = str(float(count))
+                                if time_float.split('.')[1] == '3':
+                                    time_float = float(
+                                        time_float.split('.')[0] + time_float.split('.')[1].replace('3', '.5'))
+                                else:
+                                    time_float = float(time_float)
+                                date_time = floor(time_float * 60 + user_id[call.message.chat.id].cleaning_time_min)
+                                if date_time % 60 == 0 or (date_time % 60) / 60 == 0.5:
+                                    date_time = float(date_time) / 60
+                                else:
+                                    while date_time % 60 != 0 and (date_time % 60) / 60 != 0.5:
+                                        date_time += 1
+                                    else:
+                                        date_time = float(date_time) / 60
+                                date_time = '%.2f' % float(date_time)
+                                if float(date_time) > 21:
+                                    break
+                                flag_time = True
+                                with sqlite3.connect('klinni_base.db') as con:
+                                    cur = con.cursor()
+                                    cur.execute("SELECT * FROM orders WHERE data=?",
+                                                (str(user_id[call.message.chat.id].day) + '/' +
+                                                 str(user_id[call.message.chat.id].month) + '/' +
+                                                 str(user_id[call.message.chat.id].year), ))
+                                    db_res = cur.fetchall()
+                                    performers_count = 0
+                                    for g in db_res:
+                                        performers_count += int(g[3])
+                                        flag_time = False
+                                        if g[1].split('-')[0].split(':')[1][0] == '3':
+                                            if int(g[1].split('-')[0].split(':')[0]) == 9:
+                                                time_1 = int(g[1].split('-')[0].split(':')[0])
+                                            else:
+                                                time_1 = int(g[1].split('-')[0].split(':')[0]) + 1
+                                        else:
+                                            time_1 = int(g[1].split('-')[0].split(':')[0])
+                                        if g[1].split('-')[1].split(':')[1][0] == '3':
+                                            time_2 = int(g[1].split('-')[1].split(':')[0]) + 1
+                                        else:
+                                            time_2 = int(g[1].split('-')[1].split(':')[0])
+                                        count_2 = floor(int(count))
+                                        if count_2 not in range(time_1, time_2):
+                                            flag_time = True
+                                            break
+                                        else:
+                                            flag_time = True
+                                            if performers_count >= 4 or 4 - performers_count - int(user_id[call.message.chat.id].number_of_performers) < 0:
+                                                flag_time = False
+                                                break
+                                if flag_time:
+                                    buttons[i].append(InlineKeyboardButton(str('%.2f' % count).replace('.', ':'),
+                                                                           callback_data='6' 'Рассчитать уборку :' + str(
+                                                                               '%.2f' % count).replace('.', ':') + ' :Регу'))
                                 if isinstance(count, int):
                                     count += 0.30
                                 else:
@@ -672,10 +854,9 @@ def callback_handler(call):
                             InlineKeyboardButton('Назад', callback_data='6' + 'Рассчитать уборку :Назад' + ' :День'))
                         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                               text='Выберете время', reply_markup=keyboard)
-                        user_id[call.message.chat.id].day = data.split(' :')[1]
                     if data.split(' :')[2] == 'Регу':
                         user_id[call.message.chat.id].regularity_of_cleaning = []
-                        if user_id[call.message.chat.id].time == '':
+                        if data.split(' :')[1] != '0':
                             user_id[call.message.chat.id].time = data.split(' :')[1]
                         user_id[
                             call.message.chat.id].the_date = f'{user_id[call.message.chat.id].day}/{user_id[call.message.chat.id].month}/{user_id[call.message.chat.id].year}'
@@ -728,7 +909,7 @@ def callback_handler(call):
                             except KeyError:
                                 menu(message, message.chat.id)
 
-                        if data.split(' :')[1] != '15':
+                        if data.split(' :')[1] != '20':
                             with sqlite3.connect('klinni_base.db') as con:
                                 cur = con.cursor()
                                 cur.execute("SELECT * FROM user_id WHERE chat_id=?", (call.message.chat.id,))
@@ -738,7 +919,7 @@ def callback_handler(call):
                                 user_id[call.message.chat.id].address, user_id[call.message.chat.id].full_name, user_id[call.message.chat.id].telephone, user_id[call.message.chat.id].email = res[0][3:]
                                 keyboard = InlineKeyboardMarkup()
                                 keyboard.add(InlineKeyboardButton('Использовать старые данные', callback_data='6' + 'Рассчитать уборку :' + '0' + ' :Итог'))
-                                keyboard.add(InlineKeyboardButton('Ввести по новой', callback_data='6' 'Рассчитать уборку :' + '15' + ' :Адрес'))
+                                keyboard.add(InlineKeyboardButton('Ввести по новой', callback_data='6' 'Рассчитать уборку :' + '20' + ' :Адрес'))
                                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                                       text=f'Контактные данные:\n'
                                                            f'Адресс: {user_id[call.message.chat.id].address}\n'
@@ -827,9 +1008,9 @@ def callback_handler(call):
                             keyboard = InlineKeyboardMarkup()
                             keyboard.row(InlineKeyboardButton('Заказать', callback_data='6' 'Рассчитать уборку :' + '15' + ' :Финал'),
                                          InlineKeyboardButton('Промокод', callback_data='6' 'Рассчитать уборку :' + '10' + ' :Промокод'))
-                            keyboard.add(InlineKeyboardButton('Назад', callback_data='1' 'Рассчитать уборку :' + '0' + ' :Адрес'))
+                            keyboard.add(InlineKeyboardButton('Назад', callback_data='6' 'Рассчитать уборку :' + '0' + ' :Адрес'))
                             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                                  text=text_res(call, user_id),
+                                                  text=text_res(call),
                                                   reply_markup=keyboard)
                         else:
                             keyboard = InlineKeyboardMarkup()
@@ -838,7 +1019,7 @@ def callback_handler(call):
                                          InlineKeyboardButton('Назад',
                                                               callback_data='1' 'Рассчитать уборку :' + '0' + ' :Адрес'))
                             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                                  text=text_res(call, user_id, promo=1),
+                                                  text=text_res(call, promo=1),
                                                   reply_markup=keyboard)
                     if data.split(' :')[2] == 'Промокод':
                         def user_promo_code(message):
@@ -857,7 +1038,7 @@ def callback_handler(call):
                                 keyboard.add(InlineKeyboardButton('Назад',
                                                                   callback_data='6' + 'Рассчитать уборку :' + '0' + ' :Итог'))
                                 bot.send_message(chat_id=call.message.chat.id,
-                                                 text=text_res(call, user_id, promo=1),
+                                                 text=text_res(call, promo=1),
                                                       reply_markup=keyboard)
                             else:
                                 keyboard = InlineKeyboardMarkup()
@@ -870,31 +1051,63 @@ def callback_handler(call):
                                                      call.message.message_id)
                         bot.register_next_step_handler(code, user_promo_code)
                     if data.split(' :')[2] == 'Финал':
-                        inf_4 = ('@' + user_id[call.message.chat.id].username, str(user_id[call.message.chat.id].chat_id),
+                        user_id[call.message.chat.id].chat_id = call.message.chat.id
+                        inf_4 = (user_id[call.message.chat.id].username, str(user_id[call.message.chat.id].chat_id),
                                  user_id[call.message.chat.id].address, user_id[call.message.chat.id].full_name,
                                  user_id[call.message.chat.id].telephone, user_id[call.message.chat.id].email)
-                        db_update(inf_4=inf_4)
+                        time_float = user_id[call.message.chat.id].time.replace(':', '.')
+                        if time_float.split('.')[1] == '30':
+                            time_float = float(time_float.split('.')[0] + time_float.split('.')[1].replace('3', '.5'))
+                        else:
+                            time_float = float(time_float)
+                        date_time = floor(time_float * 60 + user_id[call.message.chat.id].cleaning_time_min)
+                        if date_time % 60 == 0 or (date_time % 60) / 60 == 0.5:
+                            date_time = float(date_time) / 60
+                        else:
+                            while date_time % 60 != 0 and (date_time % 60) / 60 != 0.5:
+                                date_time += 1
+                            else:
+                                date_time = float(date_time) / 60
+                        date_time = '%.2f' % float(date_time)
+                        data_time = date_time.split('.')[0] + ':' + date_time.split('.')[1].replace('5', '3')
+                        if user_id[call.message.chat.id].additional_services == []:
+                            inf_5 = (user_id[call.message.chat.id].the_date,
+                                     str(int(user_id[call.message.chat.id].time.split(':')[0]) - 1) + ':' +
+                                     str(user_id[call.message.chat.id].time.split(':')[1]) + '-' +
+                                     str(int(data_time.split(':')[0]) + 1) + ':' + str(data_time.split(':')[1]),
+                                     user_id[call.message.chat.id].cleaning_time_min,
+                                     user_id[call.message.chat.id].number_of_performers, text_res(call), '-')
+                        else:
+                            inf_5 = (user_id[call.message.chat.id].the_date,
+                                     str(int(user_id[call.message.chat.id].time.split(':')[0]) - 1) + ':' +
+                                     str(user_id[call.message.chat.id].time.split(':')[1]) + '-' +
+                                     str(int(data_time.split(':')[0]) + 1) + ':' + str(data_time.split(':')[1]),
+                                     user_id[call.message.chat.id].cleaning_time_min,
+                                     user_id[call.message.chat.id].number_of_performers, text_res(call, additional_services=1), '-')
+                        db_update(inf_4=inf_4, inf_5=inf_5)
+                        with sqlite3.connect('klinni_base.db') as con:
+                            cur = con.cursor()
+                            cur.execute("SELECT MAX(rowid) FROM orders",)
+                            res = cur.fetchone()
+                            print(res)
                         keyboard = InlineKeyboardMarkup()
                         keyboard.row(InlineKeyboardButton('Принять', callback_data='1' + 'Принять'),
                                      InlineKeyboardButton('Удалить', callback_data='2' + 'Удаление'))
                         if user_id[call.message.chat.id].promo_code == []:
                             bot.send_message(admin_group_id,
-                                             'От пользователя:  ' + '@' + user_id[call.message.chat.id].username + '\nЗаказ № ' + str(order) +
-                                             text_res(call, user_id),
+                                             'От пользователя:  @' + user_id[call.message.chat.id].username + '\n#Заказ_' + str(res[0]) + '\n' +
+                                             text_res(call),
                                              reply_markup=keyboard)
                         else:
                             bot.send_message(admin_group_id,
-                                             'От пользователя:  ' + '@' + user_id[
-                                                 call.message.chat.id].username + '\nЗаказ № ' + str(order) +
-                                             text_res(call, user_id, promo=1),
+                                             'От пользователя:  @' + user_id[call.message.chat.id].username + '\n#Заказ_' + str(res[0]) + '\n' +
+                                             text_res(call, promo=1),
                                              reply_markup=keyboard)
-                        order += 1
                         keyboard = InlineKeyboardMarkup()
                         keyboard.add(InlineKeyboardButton('Назад', callback_data='0' + 'Меню'))
                         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                               text='Ваша заявка принята, с вами свяжется оператор для подтверждения.\nСпасибо что выбрали нас!💕',
                                               reply_markup=keyboard)
-                        return order
             except KeyError:
                 user_id[call.message.chat.id] = OrderClass()
                 keyboard = InlineKeyboardMarkup()
@@ -903,6 +1116,96 @@ def callback_handler(call):
                 keyboard.add(InlineKeyboardButton('Назад', callback_data='1' + 'Меню'))
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                       text='Что-то пошло не так\nВыберете калькулятор', reply_markup=keyboard)
+        elif data == 'Принять':
+            num = call.message.text.split('#Заказ_')[1].split('\n')[0]
+            print(num)
+            with sqlite3.connect('klinni_base.db') as con:
+                cur = con.cursor()
+                cur.execute("SELECT number_of_performers FROM orders WHERE rowid=?", (int(num), ))
+                res = cur.fetchone()
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton('Принять', callback_data='1' + 'Запись сотрудника'))
+            bot.send_message(order_group, 'Нужно сотрудников: ' + res[0] + '\n' + call.message.text, reply_markup=keyboard)
+            bot.edit_message_text(chat_id=admin_group_id, message_id=call.message.message_id,
+                                  text='Принято\n' + call.message.text)
+        elif data == 'Запись сотрудника':
+            num = call.message.text.split('#Заказ_')[1].split('\n')[0]
+            count = call.message.text.split('о сотрудников: ')[1][0]
+            print(num)
+            with sqlite3.connect('klinni_base.db') as con:
+                cur = con.cursor()
+                cur.execute("SELECT performers FROM orders WHERE rowid=?", (int(num),))
+                res = cur.fetchone()
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(InlineKeyboardButton('Принять', callback_data='1' + 'Запись сотрудника'))
+            flag_time = True
+            flag_time_2 = True
+            time_max = 0
+            with sqlite3.connect('klinni_base.db') as con:
+                cur = con.cursor()
+                cur.execute("SELECT * FROM orders WHERE data=?", (call.message.text.split('Дата: ')[1].split('\n')[0], ))
+                db_res = cur.fetchall()
+                for g in db_res:
+                    flag_time = False
+                    time_max += int(g[2])
+                    if time_max / 60 >= 8:
+                        flag_time_2 = False
+                    if call.from_user.username in g[-1]:
+                        if g[1].split('-')[0].split(':')[1][0] == '3':
+                            if int(g[1].split('-')[0].split(':')[0]) == 9:
+                                time_1 = int(g[1].split('-')[0].split(':')[0])
+                            else:
+                                time_1 = int(g[1].split('-')[0].split(':')[0]) + 1
+                        else:
+                            time_1 = int(g[1].split('-')[0].split(':')[0])
+                        if g[1].split('-')[1].split(':')[1][0] == '3':
+                            time_2 = int(g[1].split('-')[1].split(':')[0]) + 1
+                        else:
+                            time_2 = int(g[1].split('-')[1].split(':')[0])
+                        count_2 = int(call.message.text.split('Время: ')[1].split('\n')[0].split(':')[0])
+                        if count_2 not in range(time_1, time_2):
+                            flag_time = True
+                            break
+            if flag_time:
+                if int(count) - 1 == 0:
+                    if flag_time_2:
+                        bot.send_message(call.from_user.id,
+                                         'Норма рабочего времени в день 8 час, с этим заказом у вас будет превышение')
+                    else:
+                        if res[0] != '-':
+                            cur.execute("UPDATE orders SET performers=? WHERE rowid=?", (res[0] + '\n' + call.from_user.username, int(num)))
+                        else:
+                            cur.execute("UPDATE orders SET performers=? WHERE rowid=?",
+                                        (call.from_user.username, int(num)))
+                        bot.edit_message_text(chat_id=order_group, message_id=call.message.message_id,
+                                              text='Укомплектовано' + '\n' + call.message.text.split('Нужно сотрудников: ')[1][1:] + '\n' + '@' +  call.from_user.username)
+                else:
+                    if flag_time_2:
+                        bot.send_message(call.from_user.id,
+                                         'Норма рабочего времени в день 8 час, с этим заказом у вас будет превышение')
+                    else:
+                        if res[0] != '-':
+                            print(1)
+                            cur.execute("UPDATE orders SET performers=? WHERE rowid=?", (res[0] + '\n' + call.from_user.username, int(num)))
+                            con.commit()
+                        else:
+                            print(2)
+                            cur.execute("UPDATE orders SET performers=? WHERE rowid=?", (call.from_user.username, int(num)))
+                            con.commit()
+                        bot.edit_message_text(chat_id=order_group, message_id=call.message.message_id,
+                                              text='Нужно сотрудников: ' + str(int(count) - 1) + '\n' +
+                                                   call.message.text.split('Нужно сотрудников: ')[1][1:] +
+                                                   '\n' + '@' + call.from_user.username,
+                                         reply_markup=keyboard)
+            else:
+                try:
+                    if call.from_user.username in call.message.text.split('К оплате: ')[1].split('\n')[1][1:]:
+                        bot.send_message(call.from_user.id, 'Вы уже записаны на этот заказ')
+                except IndexError:
+                    bot.send_message(call.from_user.id, 'У вас уже есть заказ на это время')
+                else:
+                    bot.send_message(call.from_user.id, 'У вас уже есть заказ на это время')
+
     except KeyError:
         menu(call, call.message.chat.id)
 

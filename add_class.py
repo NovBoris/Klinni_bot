@@ -19,6 +19,10 @@ class OrderClass:
         self.price = 0
         self.username = ''
         self.chat_id = ''
+        self.cleaning_time = ''
+        self.number_of_performers = ''
+        self.data_time = ''
+        self.cleaning_time_min = 0
 
 
 class UserRequest:
